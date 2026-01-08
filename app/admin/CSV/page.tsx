@@ -368,6 +368,51 @@ export default function AdminSettingsPage() {
     }
   }
 
+  const downloadCSV = () => {
+    if (!settings || settings.length === 0) {
+      setError("No settings available to download")
+      return
+    }
+
+    // CSV Headers
+    const headers = ["Bit Id", "Bit Name", "Material Id", "Material", "RPM", "Feed", "DOC", "Stepover", "Plunge", "Warning"]
+    
+    // Convert settings to CSV rows
+    const csvRows = [
+      headers.join(","),
+      ...settings.map(setting => {
+        const row = [
+          setting.bit_id,
+          `"${setting.bit_name}"`,
+          setting.material_id,
+          `"${setting.material_name}"`,
+          setting.rpm,
+          setting.feed,
+          setting.doc,
+          setting.stepover,
+          setting.plunge,
+          setting.warning ? `"${setting.warning}"` : ""
+        ]
+        return row.join(",")
+      })
+    ]
+    
+    // Create CSV content
+    const csvContent = csvRows.join("\n")
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+    
+    link.setAttribute("href", url)
+    link.setAttribute("download", `settings_${spindleName || "spindle"}_${new Date().toISOString().split("T")[0]}.csv`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   const spindleName = typeof window !== "undefined" ? sessionStorage.getItem("spindle_name") : ""
   const materialName = typeof window !== "undefined" ? sessionStorage.getItem("material_name") : ""
   const bitName = typeof window !== "undefined" ? sessionStorage.getItem("bit_name") : ""
@@ -383,7 +428,10 @@ export default function AdminSettingsPage() {
           {/* <div className="flex text-white items-center gap-2"><span className="font-bold">Material:</span> {materialName}</div> */}
           {/* <div className="flex text-white items-center gap-2"><span className="font-bold">Bit:</span> {bitName}</div> */}
         </div>
-         <div className="flex gap-2"><Button onClick={openCreate} className="bg-teal-600 hover:bg-teal-700 text-white">Upload CSV</Button>
+      
+         <div className="flex gap-2">
+         <Button onClick={downloadCSV} className="bg-teal-600 hover:bg-teal-700 text-white">Download CSV</Button>
+         <Button onClick={openCreate} className="bg-teal-600 hover:bg-teal-700 text-white">Upload CSV</Button>
          <Button onClick={openDeleteSpindle} className="bg-red-600 hover:bg-red-700 text-white">Delete entire Spindle</Button>
          </div>
           </div>
